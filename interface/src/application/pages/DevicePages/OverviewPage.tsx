@@ -33,7 +33,9 @@ export const OverviewPage = (props: RouteComponentProps) => {
   // Create our force by displacement plot data
   const forceByDisplacementOnlyThisSession = new DataTransformer(({ watch }) => {
     // Coalesce the data from the force and displacement data sources, into the x and y components of the chart
-    const forceByDisplacement = coalesce({ x: displacementDS, y: forceDS })
+    // The second argument specifies if the operator should wait until both force and displacement have been updated before
+    // emitting the next event
+    const forceByDisplacement = coalesce({ x: displacementDS, y: forceDS }, true)
 
     // The 'prepare' operator lets us cut the data off before this time
     // The 'watch' call lets us re-run this query when it changes.
