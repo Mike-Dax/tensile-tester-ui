@@ -73,8 +73,8 @@ export const Header = (
                 }}
               />
             )}
-          </Navbar.Group>{' '}
-          <Navbar.Group align={Alignment.RIGHT}>
+          </Navbar.Group>
+          {/* <Navbar.Group align={Alignment.RIGHT}>
             <Button
               minimal
               large
@@ -85,17 +85,7 @@ export const Header = (
               }}
               active={page === ''}
             />
-            <Button
-              minimal
-              large
-              icon="settings"
-              text="Secondary"
-              onClick={() => {
-                navigate(`/devices/${props.deviceID}/secondary`)
-              }}
-              active={page === 'secondary'}
-            />
-          </Navbar.Group>{' '}
+          </Navbar.Group> */}
         </div>
       </Navbar>
     </div>
