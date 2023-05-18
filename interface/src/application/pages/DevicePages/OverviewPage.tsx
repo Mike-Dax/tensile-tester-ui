@@ -1,74 +1,121 @@
+import React from 'react'
+
+import { RouteComponentProps } from '@reach/router'
+
 import {
   ChartContainer,
-  LineChart,
-  RealTimeDomain,
-  TimeAxis,
+  HorizontalAxis,
+  RealTimeSlicingDomain,
   VerticalAxis,
+  TimeSlicedLineChart,
 } from '@electricui/components-desktop-charts'
-
-import { Card } from '@blueprintjs/core'
-import { Composition } from 'atomic-layout'
-import { IntervalRequester } from '@electricui/components-core'
-import { LightBulb } from '../../components/LightBulb'
 import { MessageDataSource } from '@electricui/core-timeseries'
-import React from 'react'
-import { RouteComponentProps } from '@reach/router'
-import { Slider } from '@electricui/components-desktop-blueprint'
+import { Button } from '@electricui/components-desktop-blueprint'
+import { timing } from '@electricui/timing'
+import {
+  DataTransformer,
+  prepare,
+  coalesce,
+} from '@electricui/dataflow'
+import { useLocalSignal } from '@electricui/signals'
+import { Colors, Button as BlueprintButton, Intent, Card } from '@blueprintjs/core'
+import { IconNames } from '@blueprintjs/icons'
 
-const layoutDescription = `
-  Chart Chart
-  Light Slider
-`
-
-const ledStateDataSource = new MessageDataSource('led_state')
+const displacementDS = new MessageDataSource('disp')
+const forceDS = new MessageDataSource('force')
 
 export const OverviewPage = (props: RouteComponentProps) => {
+  
+  // Create a local signal that handles the time cutoff for our current 'session'
+  // We'll set this to a new time when we want to filter out any events before that point.
+  const [ignoreBefore, setIgnoreBefore] = useLocalSignal(timing.now())
+
+  // Create our force by displacement plot data
+  const forceByDisplacementOnlyThisSession = new DataTransformer(({ watch }) => {
+    // Coalesce the data from the force and displacement data sources, into the x and y components of the chart
+    const forceByDisplacement = coalesce({ x: displacementDS, y: forceDS })
+
+    // The 'prepare' operator lets us cut the data off before this time
+    // The 'watch' call lets us re-run this query when it changes.
+    const ignoreBeforeVal = watch(ignoreBefore)
+
+    return prepare(forceByDisplacement, query => query.start(ignoreBeforeVal))
+  })
+
+  // The actual layout of the UI, just done with quick and easy inline styles
   return (
-    <React.Fragment>
-      <IntervalRequester interval={50} variables={['led_state']} />
+    <div style={{ padding: 10 }}>
+      {/* The title */}
+      <div>
+        <h1 style={{ textAlign: 'center', fontSize: '4em' }}>Tensile Tester</h1>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 350px', gap: 10, padding: 10 }}>
+        {/* Charts */}
+        <Card>
+          <ChartContainer height={600}>
+            {/* Our time sliced line chart, can be replaced with a ScatterPlot  */}
+            <TimeSlicedLineChart
+              // The actual source of the data
+              dataSource={forceByDisplacementOnlyThisSession}
+              // The colour of the chart
+              color={Colors.GREEN3}
+              // If the 'clear session' signal triggers, blank the data in the chart
+              blankTrigger={ignoreBefore}
+            />
+            {/* The domain moves the 'camera' over time */}
+            <RealTimeSlicingDomain
+              // Set a window in milliseconds
+              window={10_000}
+              // Use these to determine the domain bounds, better to set them than have the chart jump around a bunch
+              yMinSoft={-200}
+              yMaxSoft={200}
+              xMinSoft={-200}
+              xMaxSoft={200}
+            />
 
-      <Composition areas={layoutDescription} gap={10} autoCols="1fr">
-        {Areas => (
-          <React.Fragment>
-            <Areas.Chart>
-              <Card>
-                <div style={{ textAlign: 'center', marginBottom: '1em' }}>
-                  <b>LED State</b>
-                </div>
-                <ChartContainer>
-                  <LineChart dataSource={ledStateDataSource} maxItems={10000} />
-                  <RealTimeDomain window={10000} />
-                  <TimeAxis />
-                  <VerticalAxis />
-                </ChartContainer>
-              </Card>
-            </Areas.Chart>
+            {/* Our axes, with their labels, add the units in here */}
+            <VerticalAxis label="Force" />
+            <HorizontalAxis label="Displacement" />
+            {/* Fog fades out old data over time */}
+            {/* <Fog color={Colors.WHITE} /> */}
+          </ChartContainer>
 
-            <Areas.Light>
-              <LightBulb
-                containerStyle={{ margin: '20px auto', width: '80%' }}
-                width="40vw"
-              />
-            </Areas.Light>
+          {/* Settings */}
+        </Card>
 
-            <Areas.Slider>
-              <Card>
-                <div style={{ margin: 20 }}>
-                  <Slider
-                    min={20}
-                    max={1020}
-                    stepSize={10}
-                    labelStepSize={100}
-                    sendOnlyOnRelease
-                  >
-                    <Slider.Handle accessor="lit_time" />
-                  </Slider>
-                </div>
-              </Card>
-            </Areas.Slider>
-          </React.Fragment>
-        )}
-      </Composition>
-    </React.Fragment>
+        <Card style={{ display: 'grid', gap: 10 }}>
+          <div style={{ alignSelf: 'start', display: 'grid', gap: 10 }}>
+            <Button callback="home" large fill intent={Intent.WARNING}>
+              Home
+            </Button>
+            <Button callback="run" large fill intent={Intent.SUCCESS}>
+              Run
+            </Button>
+          </div>
+          <div style={{ alignSelf: 'center', display: 'grid', gap: 10 }}>
+            <Button callback="up" large fill intent={Intent.PRIMARY} icon={IconNames.CHEVRON_UP}>
+              Up
+            </Button>
+            <Button callback="down" large fill intent={Intent.PRIMARY} icon={IconNames.CHEVRON_DOWN}>
+              Down
+            </Button>
+          </div>
+
+          {/* This button sets the time signal to 'now', cutting off any data before it */}
+          <div style={{ alignSelf: 'end' }}>
+            <BlueprintButton
+              onClick={() => {
+                setIgnoreBefore(timing.now())
+              }}
+              large
+              fill
+              intent={Intent.DANGER}
+            >
+              Clear Plot
+            </BlueprintButton>
+          </div>
+        </Card>
+      </div>
+    </div>
   )
 }

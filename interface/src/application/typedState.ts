@@ -9,10 +9,8 @@ declare global {
   interface ElectricUIDeveloperState {
     [messageID: string]: any
 
-    // Example messageID typings
-    led_blink: number
-    led_state: number
-    lit_time: number
+    force: number
+    disp: number
   }
   interface ElectricUIDeviceMetadataState {
     name: string
