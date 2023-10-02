@@ -59,7 +59,6 @@ export function SessionList(props: {
           />
           <SessionRecorder
             updateSession={session => {
-              console.log(`new session!`, session)
               updateSession(session)
             }}
             metadata={{ name: currentName }}
@@ -273,7 +272,6 @@ function SlicedSession<
                   <Button
                     {...targetProps}
                     onClick={event => {
-                      console.log(`did it run`)
                       event.stopPropagation()
                       onClick!(event)
                       setDeleteDialogOpen(true)
