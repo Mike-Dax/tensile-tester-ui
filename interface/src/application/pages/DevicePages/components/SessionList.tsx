@@ -17,6 +17,7 @@ import { SessionWithAPI, useInMemorySessionSource } from '@electricui/core-times
 import { DeviceID } from '@electricui/core'
 import { useSignal } from '@electricui/signals'
 import { useDarkMode } from '@electricui/components-desktop'
+import { Popover2, Classes, PlacementOptions } from '@blueprintjs/popover2'
 
 import { ExportSessionAsCSV } from './ExportSessionAsCSV'
 
@@ -182,6 +183,8 @@ function SlicedSession<
     return coalesce({ x: displacementDS, y: forceDS }, false)
   })
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+
   return (
     // Wrap it in a ZoomWrapper so any DataSourceTemplates in this card have correct queries for the session.
     <ZoomWrapper isFixed start={session.start} end={session.end}>
@@ -225,13 +228,61 @@ function SlicedSession<
             {session.recording ? (
               <Button disabled icon={IconNames.RECORD} intent={Intent.PRIMARY} />
             ) : (
-              <Button
-                onClick={event => {
-                  event.stopPropagation() // Don't let the outer div onClick handler receive this event, we're handling it.
-                  removeSession(session.uuid)
+              <Popover2
+                interactionKind="click"
+                popoverClassName={Classes.POPOVER2_CONTENT_SIZING}
+                placement={'top-start'}
+                hoverCloseDelay={0}
+                hoverOpenDelay={0}
+                transitionDuration={0}
+                onInteraction={(nextState, event) => {
+                  event?.stopPropagation()
                 }}
-                icon={IconNames.DELETE}
-                intent={Intent.DANGER}
+                isOpen={deleteDialogOpen}
+                content={
+                  <Card style={{ zIndex: 5, width: 300, padding: 10 }} elevation={Elevation.FOUR}>
+                    <h3 style={{ margin: 0, paddingBottom: 10 }}>Confirm deletion</h3>
+                    <p>Are you sure you want to delete this session?</p>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 15 }}>
+                      <Button
+                        className={Classes.POPOVER2_DISMISS}
+                        style={{ marginRight: 10 }}
+                        onClick={event => {
+                          event.stopPropagation() // Don't let the outer div onClick handler receive this event, we're handling it.
+                          setDeleteDialogOpen(false)
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        intent={Intent.DANGER}
+                        className={Classes.POPOVER2_DISMISS}
+                        onClick={event => {
+                          removeSession(session.uuid)
+
+                          event.stopPropagation() // Don't let the outer div onClick handler receive this event, we're handling it.
+                          setDeleteDialogOpen(false)
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </Card>
+                }
+                renderTarget={({ isOpen, ref, onClick, ...targetProps }) => (
+                  <Button
+                    {...targetProps}
+                    onClick={event => {
+                      console.log(`did it run`)
+                      event.stopPropagation()
+                      onClick!(event)
+                      setDeleteDialogOpen(true)
+                    }}
+                    elementRef={ref!}
+                    icon={IconNames.DELETE}
+                    intent={Intent.DANGER}
+                  />
+                )}
               />
             )}
 

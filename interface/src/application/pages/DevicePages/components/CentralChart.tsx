@@ -13,12 +13,15 @@ import {
 import { useMessageDataSource } from '@electricui/core-timeseries'
 import { coalesce, DataTransformer } from '@electricui/dataflow'
 import { useFilterSessionsFromQueryable, SessionWithAPI } from '@electricui/core-timeseries'
+import { useSignal } from '@electricui/signals'
 
 import { SessionMetadata, SessionIdentity } from './SessionList'
 
 export function CentralChart(props: {
   legend: KeyedAnnotatedLegendData<KeyedLegendDefinitions>
   sessions: SessionWithAPI<SessionMetadata, SessionIdentity>[]
+  earliestSessionStart: number | null
+  latestSessionEnd: number | null
 }) {
   // Grab session and legend data
   const legend = props.legend
@@ -40,6 +43,8 @@ export function CentralChart(props: {
 
   // Remove data in sessions from the 'live' source
   const filterLiveFromSessions = useFilterSessionsFromQueryable(forceByDisplacement, sessions)
+
+  const liveSignalSelected = useSignal(legend.live.selected)
 
   return (
     <ChartContainer height={'calc(100vh - 78px - 40px - 40px)'}>
@@ -76,8 +81,12 @@ export function CentralChart(props: {
       {/* Select the time range across all sessions (regardless of if they're selected) */}
       <StaticDomain
         sortedDimension="z"
-        // zMin={earliestSessionStart ?? -Infinity}
-        // zMax={liveSignalSelected ? Infinity : latestSessionEnd ?? Infinity}
+        zMin={props.earliestSessionStart ?? -Infinity}
+        zMax={liveSignalSelected ? Infinity : props.latestSessionEnd ?? Infinity}
+        xMinSoft={-200}
+        yMinSoft={-200}
+        xMaxSoft={200}
+        yMaxSoft={200}
       />
 
       {/* Our axes, with their labels, add the units in here */}

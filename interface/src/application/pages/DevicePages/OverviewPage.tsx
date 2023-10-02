@@ -27,7 +27,10 @@ import { CentralChart } from './components/CentralChart'
 
 export const OverviewPage = (props: RouteComponentProps) => {
   // Sessions need to be hoisted up here so both the sidebar and the charts can use the Legend data
-  const { sessions, recording } = useSessions<SessionMetadata, SessionIdentity>()
+  const { sessions, recording, earliestSessionStart, latestSessionEnd } = useSessions<
+    SessionMetadata,
+    SessionIdentity
+  >()
 
   const getConsistentColor = useConsistentColorFactory()
   const legendDef = sessionsToLegendDefinition(
@@ -54,7 +57,12 @@ export const OverviewPage = (props: RouteComponentProps) => {
         <Card>
           {/* height = 100vh - height of header - padding of grid - padding of card */}
 
-          <CentralChart legend={legend} sessions={sessions} />
+          <CentralChart
+            legend={legend}
+            sessions={sessions}
+            earliestSessionStart={earliestSessionStart}
+            latestSessionEnd={latestSessionEnd}
+          />
 
           {/* Settings */}
         </Card>
