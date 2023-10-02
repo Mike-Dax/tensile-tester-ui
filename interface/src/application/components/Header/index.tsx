@@ -1,4 +1,4 @@
-import { Alignment, Button, Navbar } from '@blueprintjs/core'
+import { Alignment, Button, Intent, Navbar, Tag } from '@blueprintjs/core'
 import {
   useDeadline,
   useDeviceConnect,
@@ -9,72 +9,96 @@ import {
 import React from 'react'
 import { RouteComponentProps } from '@reach/router'
 import { navigate } from '@electricui/utility-electron'
+import { DataSourcePrinter } from '@electricui/components-desktop-charts'
+import { useMessageDataSource } from '@electricui/core-timeseries'
 
 interface InjectDeviceIDFromLocation {
   deviceID?: string
   '*'?: string // we get passed the path as the wildcard
 }
 
-export const Header = (
-  props: RouteComponentProps & InjectDeviceIDFromLocation,
-) => {
+export const Header = (props: RouteComponentProps & InjectDeviceIDFromLocation) => {
   const disconnect = useDeviceDisconnect()
   const connect = useDeviceConnect()
   const connectionRequested = useDeviceConnectionRequested()
   const getDeadline = useDeadline()
 
-  const page = props['*'] // we get passed the path as the wildcard, so we read it here
+  const displacementDS = useMessageDataSource('disp')
+  const forceDS = useMessageDataSource('force')
 
   return (
     <div className="device-header">
-      <Navbar style={{ background: 'transparent', boxShadow: 'none' }}>
-        <div style={{ margin: '0 auto', width: '100%' }}>
-          <Navbar.Group align={Alignment.LEFT}>
+      <Navbar
+        style={{ background: 'transparent', boxShadow: 'none', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}
+      >
+        <Navbar.Group>
+          <Button
+            minimal
+            large
+            icon="home"
+            text="Back"
+            onClick={() => {
+              navigate('/')
+            }}
+          />
+
+          {connectionRequested ? (
             <Button
               minimal
               large
-              icon="home"
-              text="Back"
+              intent="danger"
+              icon="cross"
+              text="Disconnect"
               onClick={() => {
-                navigate('/')
+                disconnect().catch(err => {
+                  console.warn('Failed to disconnect', err)
+                })
+                // Go home on disconnect
+                navigate(`/`)
               }}
             />
+          ) : (
+            <Button
+              minimal
+              large
+              icon="link"
+              intent="success"
+              text="Connect again"
+              onClick={() => {
+                const cancellationToken = getDeadline()
 
-            {connectionRequested ? (
-              <Button
-                minimal
-                intent="danger"
-                icon="cross"
-                text="Disconnect"
-                onClick={() => {
-                  disconnect().catch(err => {
-                    console.warn('Failed to disconnect', err)
-                  })
-                  // Go home on disconnect
-                  navigate(`/`)
-                }}
-              />
-            ) : (
-              <Button
-                minimal
-                icon="link"
-                intent="success"
-                text="Connect again"
-                onClick={() => {
-                  const cancellationToken = getDeadline()
+                connect(cancellationToken).catch(err => {
+                  if (cancellationToken.caused(err)) {
+                    return
+                  }
 
-                  connect(cancellationToken).catch(err => {
-                    if (cancellationToken.caused(err)) {
-                      return
-                    }
-
-                    console.warn('Failed to connect', err)
-                  })
-                }}
-              />
-            )}
-          </Navbar.Group>
-          {/* <Navbar.Group align={Alignment.RIGHT}>
+                  console.warn('Failed to connect', err)
+                })
+              }}
+            />
+          )}
+        </Navbar.Group>
+        <Navbar.Group style={{ textAlign: 'center' }}>
+          {/* The title */}
+          <h1 style={{ textAlign: 'center', fontSize: '3em', width: '100%' }}>Tensile Tester</h1>
+        </Navbar.Group>
+        <Navbar.Group style={{ display: 'flex', gap: '1em', justifyContent: 'end', paddingRight: '1em' }}>
+          <Tag large intent={Intent.PRIMARY} minimal>
+            Force:{' '}
+            <span style={{ fontFamily: 'monospace' }}>
+              <DataSourcePrinter dataSource={forceDS} />
+            </span>
+            kN
+          </Tag>
+          <Tag large intent={Intent.PRIMARY} minimal>
+            Displacement:{' '}
+            <span style={{ fontFamily: 'monospace' }}>
+              <DataSourcePrinter dataSource={displacementDS} />
+            </span>
+            mm
+          </Tag>
+        </Navbar.Group>
+        {/* <Navbar.Group align={Alignment.RIGHT}>
             <Button
               minimal
               large
@@ -86,7 +110,6 @@ export const Header = (
               active={page === ''}
             />
           </Navbar.Group> */}
-        </div>
       </Navbar>
     </div>
   )

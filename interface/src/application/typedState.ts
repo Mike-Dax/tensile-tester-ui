@@ -11,6 +11,17 @@ declare global {
 
     force: number
     disp: number
+
+    // Variables used in testing
+    mv_enabled: number
+    led_state: number // flicks on and off every mv_in
+    mv_in: number
+    mv_am: number
+
+    // Callbacks
+    up: null
+    down: null
+    stop: null
   }
   interface ElectricUIDeviceMetadataState {
     name: string

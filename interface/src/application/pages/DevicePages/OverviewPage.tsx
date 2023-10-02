@@ -2,90 +2,72 @@ import React from 'react'
 
 import { RouteComponentProps } from '@reach/router'
 
+import { Divider } from '@blueprintjs/core'
+
+import { Colors, Card, Intent } from '@blueprintjs/core'
 import {
   ChartContainer,
   HorizontalAxis,
   RealTimeSlicingDomain,
   VerticalAxis,
   TimeSlicedLineChart,
+  useConsistentColorFactory,
+  useLegend,
 } from '@electricui/components-desktop-charts'
-import { MessageDataSource } from '@electricui/core-timeseries'
-import { Button } from '@electricui/components-desktop-blueprint'
-import { timing } from '@electricui/timing'
-import {
-  DataTransformer,
-  prepare,
-  coalesce,
-} from '@electricui/dataflow'
-import { useLocalSignal } from '@electricui/signals'
-import { Colors, Button as BlueprintButton, Intent, Card } from '@blueprintjs/core'
-import { IconNames } from '@blueprintjs/icons'
 
-const displacementDS = new MessageDataSource('disp')
-const forceDS = new MessageDataSource('force')
+import { Button } from '@electricui/components-desktop-blueprint'
+
+import { useSessions, sessionsToLegendDefinition, useInMemorySessionSource } from '@electricui/core-timeseries'
+
+import { IntervalRequester } from '@electricui/components-core'
+import { ExportSessionAsCSV } from './components/ExportSessionAsCSV'
+import { JogButtons } from './components/JogButtons'
+import { SessionMetadata, SessionIdentity, SessionList } from './components/SessionList'
+import { CentralChart } from './components/CentralChart'
 
 export const OverviewPage = (props: RouteComponentProps) => {
-  
-  // Create a local signal that handles the time cutoff for our current 'session'
-  // We'll set this to a new time when we want to filter out any events before that point.
-  const [ignoreBefore, setIgnoreBefore] = useLocalSignal(timing.now())
+  // Sessions need to be hoisted up here so both the sidebar and the charts can use the Legend data
+  const { sessions, recording } = useSessions<SessionMetadata, SessionIdentity>()
 
-  // Create our force by displacement plot data
-  const forceByDisplacementOnlyThisSession = new DataTransformer(({ watch }) => {
-    // Coalesce the data from the force and displacement data sources, into the x and y components of the chart
-    // The second argument specifies if the operator should wait until both force and displacement have been updated before
-    // emitting the next event
-    const forceByDisplacement = coalesce({ x: displacementDS, y: forceDS }, true)
+  const getConsistentColor = useConsistentColorFactory()
+  const legendDef = sessionsToLegendDefinition(
+    sessions,
+    session => session.metadata.name,
+    session => getConsistentColor(session.uuid) as string,
+  )
 
-    // The 'prepare' operator lets us cut the data off before this time
-    // The 'watch' call lets us re-run this query when it changes.
-    const ignoreBeforeVal = watch(ignoreBefore)
+  // Add a 'live' option to the legend def
+  legendDef.live = {
+    color: Colors.GRAY5,
+    name: 'Live',
+  }
 
-    return prepare(forceByDisplacement, query => query.start(ignoreBeforeVal))
-  })
+  const legend = useLegend(legendDef, { visibleIfHovered: true, unhoveredOpacity: 0.5 })
 
   // The actual layout of the UI, just done with quick and easy inline styles
   return (
-    <div style={{ padding: 10 }}>
-      {/* The title */}
-      <div>
-        <h1 style={{ textAlign: 'center', fontSize: '4em' }}>Tensile Tester</h1>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 350px', gap: 10, padding: 10 }}>
+    <>
+      <IntervalRequester variables={['led_state']} interval={50} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 450px', gap: 10 }}>
         {/* Charts */}
         <Card>
-          <ChartContainer height={600}>
-            {/* Our time sliced line chart, can be replaced with a ScatterPlot  */}
-            <TimeSlicedLineChart
-              // The actual source of the data
-              dataSource={forceByDisplacementOnlyThisSession}
-              // The colour of the chart
-              color={Colors.GREEN3}
-              // If the 'clear session' signal triggers, blank the data in the chart
-              blankTrigger={ignoreBefore}
-            />
-            {/* The domain moves the 'camera' over time */}
-            <RealTimeSlicingDomain
-              // Set a window in milliseconds
-              window={10_000}
-              // Use these to determine the domain bounds, better to set them than have the chart jump around a bunch
-              yMinSoft={-200}
-              yMaxSoft={200}
-              xMinSoft={-200}
-              xMaxSoft={200}
-            />
+          {/* height = 100vh - height of header - padding of grid - padding of card */}
 
-            {/* Our axes, with their labels, add the units in here */}
-            <VerticalAxis label="Force" />
-            <HorizontalAxis label="Displacement" />
-            {/* Fog fades out old data over time */}
-            {/* <Fog color={Colors.WHITE} /> */}
-          </ChartContainer>
+          <CentralChart legend={legend} sessions={sessions} />
 
           {/* Settings */}
         </Card>
 
-        <Card style={{ display: 'grid', gap: 10 }}>
+        <Card
+          style={{
+            display: 'grid',
+            gap: 10,
+            // The initial buttons, then SessionList's add session row, then the scrollable list of sessions
+            gridTemplateRows: 'min-content min-content 1fr min-content',
+            maxHeight: 'calc(100vh - 78px - 40px)', // Limit the height manually
+          }}
+        >
           <div style={{ alignSelf: 'start', display: 'grid', gap: 10 }}>
             <Button callback="home" large fill intent={Intent.WARNING}>
               Home
@@ -93,31 +75,19 @@ export const OverviewPage = (props: RouteComponentProps) => {
             <Button callback="run" large fill intent={Intent.SUCCESS}>
               Run
             </Button>
-          </div>
-          <div style={{ alignSelf: 'center', display: 'grid', gap: 10 }}>
-            <Button callback="up" large fill intent={Intent.PRIMARY} icon={IconNames.CHEVRON_UP}>
-              Up
-            </Button>
-            <Button callback="down" large fill intent={Intent.PRIMARY} icon={IconNames.CHEVRON_DOWN}>
-              Down
-            </Button>
+
+            <Divider />
+
+            <JogButtons />
+
+            <Divider />
           </div>
 
-          {/* This button sets the time signal to 'now', cutting off any data before it */}
-          <div style={{ alignSelf: 'end' }}>
-            <BlueprintButton
-              onClick={() => {
-                setIgnoreBefore(timing.now())
-              }}
-              large
-              fill
-              intent={Intent.DANGER}
-            >
-              Clear Plot
-            </BlueprintButton>
-          </div>
+          {/* This section uses the rest of the space. It returns two elements, 
+          the add new interface, then the scrollable list. */}
+          <SessionList legend={legend} sessions={sessions} recording={recording} />
         </Card>
       </div>
-    </div>
+    </>
   )
 }
