@@ -38,8 +38,7 @@ body {
   padding-top: 1em;
   padding-bottom: 1em;
   width: 100%;
-  box-shadow: 0 0 0 1px rgba(16, 22, 26, 0.15), 0 0 0 rgba(16, 22, 26, 0),
-    0 0 0 rgba(16, 22, 26, 0);
+  box-shadow: 0 0 0 1px rgba(16, 22, 26, 0.15), 0 0 0 rgba(16, 22, 26, 0), 0 0 0 rgba(16, 22, 26, 0);
   z-index: 1;
   background: #fff;
 }

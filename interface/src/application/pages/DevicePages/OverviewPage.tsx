@@ -73,7 +73,7 @@ export const OverviewPage = (props: RouteComponentProps) => {
             gap: 10,
             // The initial buttons, then SessionList's add session row, then the scrollable list of sessions
             gridTemplateRows: 'min-content min-content 1fr min-content',
-            maxHeight: 'calc(100vh - 78px - 40px)', // Limit the height manually
+            maxHeight: 'calc(100vh - 60px - 40px)', // Limit the height manually
           }}
         >
           <div style={{ alignSelf: 'start', display: 'grid', gap: 10 }}>

@@ -78,10 +78,7 @@ export const Header = (props: RouteComponentProps & InjectDeviceIDFromLocation) 
             />
           )}
         </Navbar.Group>
-        <Navbar.Group style={{ textAlign: 'center' }}>
-          {/* The title */}
-          <h1 style={{ textAlign: 'center', fontSize: '3em', width: '100%' }}>Tensile Tester</h1>
-        </Navbar.Group>
+        <Navbar.Group style={{ textAlign: 'center' }}>{/* What to put here? */}</Navbar.Group>
         <Navbar.Group style={{ display: 'flex', gap: '1em', justifyContent: 'end', paddingRight: '1em' }}>
           <Tag large intent={Intent.PRIMARY} minimal>
             Force:{' '}
