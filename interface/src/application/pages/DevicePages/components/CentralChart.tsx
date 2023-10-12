@@ -9,6 +9,8 @@ import {
   TimeSlicedLineChart,
   KeyedLegendDefinitions,
   KeyedAnnotatedLegendData,
+  ScatterPlot,
+  PointAnnotation,
 } from '@electricui/components-desktop-charts'
 import { useMessageDataSource } from '@electricui/core-timeseries'
 import { coalesce, DataTransformer } from '@electricui/dataflow'
@@ -42,23 +44,26 @@ export function CentralChart(props: {
   })
 
   // Remove data in sessions from the 'live' source
-  const filterLiveFromSessions = useFilterSessionsFromQueryable(forceByDisplacement, sessions)
+  // Since we're just using a PointAnnotation, we can ignore this, since we'll only
+  // be displaying the latest point.
+  // const filterLiveFromSessions = useFilterSessionsFromQueryable(forceByDisplacement, sessions)
 
   const liveSignalSelected = useSignal(legend.live.selected)
 
   return (
-    <ChartContainer height={'calc(100vh - 78px - 40px - 40px)'}>
-      {/* Our time sliced line chart for live data */}
-      <TimeSlicedLineChart
+    <ChartContainer height={'calc(100vh - 60px - 40px - 40px)'}>
+      {/* Our live data is represented as a point annotation*/}
+      <PointAnnotation
         // The actual source of the data
-        dataSource={filterLiveFromSessions}
+        dataSource={forceByDisplacement}
         // The colour of the chart
-        color={Colors.GREEN3}
+        color={Colors.ORANGE3}
         // Line width
-        lineWidth={5}
+        size={8}
         // Opacity and visibility is driven by the legend
         opacitySource={legend.live.opacity}
         visibilitySource={legend.live.visible}
+        affectBounds
       />
 
       {/* Every session is drawn under the live view  */}
