@@ -5,10 +5,10 @@ import { Button as BlueprintButton, Intent, Card, FormGroup, Elevation } from '@
 import { Popover2, Classes } from '@blueprintjs/popover2'
 import { IconNames } from '@blueprintjs/icons'
 
-export function JogButtons() {
+export function JogButtons(props: { horizontal?: boolean }) {
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 40px', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: props.horizontal ? '1fr 1fr 40px' : '1fr 40px', gap: 10 }}>
         <Button
           large
           fill
@@ -19,6 +19,19 @@ export function JogButtons() {
         >
           Up
         </Button>
+
+        {props.horizontal ? (
+          <Button
+            large
+            fill
+            intent={Intent.PRIMARY}
+            icon={IconNames.CHEVRON_LEFT}
+            onMouseDownCallback="left"
+            onMouseUpCallback="stop"
+          >
+            Left
+          </Button>
+        ) : null}
 
         <Popover2
           interactionKind="click"
@@ -54,7 +67,7 @@ export function JogButtons() {
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 40px', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: props.horizontal ? '1fr 1fr 40px' : '1fr 40px', gap: 10 }}>
         <Button
           large
           fill
@@ -65,6 +78,19 @@ export function JogButtons() {
         >
           Down
         </Button>
+
+        {props.horizontal ? (
+          <Button
+            large
+            fill
+            intent={Intent.PRIMARY}
+            icon={IconNames.CHEVRON_RIGHT}
+            onMouseDownCallback="right"
+            onMouseUpCallback="stop"
+          >
+            Right
+          </Button>
+        ) : null}
 
         <Popover2
           interactionKind="click"

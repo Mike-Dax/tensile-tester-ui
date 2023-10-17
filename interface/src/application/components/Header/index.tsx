@@ -11,6 +11,7 @@ import { RouteComponentProps } from '@reach/router'
 import { navigate } from '@electricui/utility-electron'
 import { DataSourcePrinter } from '@electricui/components-desktop-charts'
 import { useMessageDataSource } from '@electricui/core-timeseries'
+import { IconNames } from '@blueprintjs/icons'
 
 interface InjectDeviceIDFromLocation {
   deviceID?: string
@@ -25,6 +26,8 @@ export const Header = (props: RouteComponentProps & InjectDeviceIDFromLocation) 
 
   const displacementDS = useMessageDataSource('disp')
   const forceDS = useMessageDataSource('force')
+
+  const page = props['*'] // we get passed the path as the wildcard, so we read it here
 
   return (
     <div className="device-header">
@@ -78,8 +81,7 @@ export const Header = (props: RouteComponentProps & InjectDeviceIDFromLocation) 
             />
           )}
         </Navbar.Group>
-        <Navbar.Group style={{ textAlign: 'center' }}>{/* What to put here? */}</Navbar.Group>
-        <Navbar.Group style={{ display: 'flex', gap: '1em', justifyContent: 'end', paddingRight: '1em' }}>
+        <Navbar.Group style={{ display: 'flex', gap: '1em', justifyContent: 'center', paddingRight: '1em' }}>
           <Tag large intent={Intent.PRIMARY} minimal>
             Force:{' '}
             <span style={{ fontFamily: 'monospace' }}>
@@ -94,6 +96,28 @@ export const Header = (props: RouteComponentProps & InjectDeviceIDFromLocation) 
             </span>
             mm
           </Tag>
+        </Navbar.Group>
+        <Navbar.Group style={{ display: 'flex', gap: '1em', justifyContent: 'end', paddingRight: '1em' }}>
+          <Button
+            minimal
+            large
+            icon={IconNames.DASHBOARD}
+            text="Analysis"
+            onClick={() => {
+              navigate(`/devices/${props.deviceID}/`)
+            }}
+            active={page === ''}
+          />
+          <Button
+            minimal
+            large
+            icon={IconNames.SETTINGS}
+            text="Setup"
+            onClick={() => {
+              navigate(`/devices/${props.deviceID}/setup`)
+            }}
+            active={page === 'setup'}
+          />
         </Navbar.Group>
         {/* <Navbar.Group align={Alignment.RIGHT}>
             <Button

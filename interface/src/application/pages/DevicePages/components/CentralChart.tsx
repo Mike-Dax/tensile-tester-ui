@@ -189,6 +189,23 @@ export function CentralChart(props: {
     )
   })
 
+  // The data transformer to calculate average force for each displacement value
+  // TODO: How do we do this?
+  const averageForcePerDisplacement = useDataTransformer(
+    () =>
+      map(
+        //
+        coalesce(
+          sessions.map(session => session.select(forceByDisplacement)),
+          { synchronize: false, synchronizeInitial: false, defaultValue: null },
+        ),
+        data => {
+          return 0
+        },
+      ),
+    [sessions], // reset on sessions changing
+  )
+
   const isDark = useDarkMode()
 
   const lumMod = isDark ? 1.4 : 0.4
