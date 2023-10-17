@@ -24,6 +24,8 @@ import { useSignal } from '@electricui/signals'
 import { SessionMetadata, SessionIdentity, CustomLegendSignals } from './SessionList'
 import { useDataSubscription, useDataTransformer } from '@electricui/timeseries-react'
 
+import { useDarkMode } from '@electricui/components-desktop'
+
 export function CentralChart(props: {
   legend: KeyedAnnotatedLegendData<KeyedLegendDefinitions, CustomLegendSignals>
   sessions: SessionWithAPI<SessionMetadata, SessionIdentity>[]
@@ -187,6 +189,10 @@ export function CentralChart(props: {
     )
   })
 
+  const isDark = useDarkMode()
+
+  const lumMod = isDark ? 1.4 : 0.4
+
   return (
     <ChartContainer height="calc(100vh - 60px - 40px - 40px)">
       {/* Every session is drawn under the live view  */}
@@ -217,7 +223,7 @@ export function CentralChart(props: {
           <PointAnnotation
             dataSource={legend[session.uuid].customSignals.dragStart}
             size={6}
-            color={legend[session.uuid].color}
+            color={luminance(legend[session.uuid].color, lumMod)}
             opacitySource={legend[session.uuid].opacity}
             // opacity={recording ? 0 : 1} // Hide the realtime chart if recording (opacity and opacitySource are multiplicative)
             visibilitySource={legend[session.uuid].visible}
@@ -231,7 +237,7 @@ export function CentralChart(props: {
           <PointAnnotation
             dataSource={legend[session.uuid].customSignals.dragEnd}
             size={6}
-            color={legend[session.uuid].color}
+            color={luminance(legend[session.uuid].color, lumMod)}
             opacitySource={legend[session.uuid].opacity}
             // opacity={recording ? 0 : 1} // Hide the realtime chart if recording (opacity and opacitySource are multiplicative)
             visibilitySource={legend[session.uuid].visible}
@@ -262,7 +268,7 @@ export function CentralChart(props: {
                 : null
             }
             lineWidth={2}
-            color={legend[session.uuid].color}
+            color={luminance(legend[session.uuid].color, lumMod)}
             opacitySource={legend[session.uuid].opacity}
             // opacity={recording ? 0 : 1} // Hide the realtime chart if recording (opacity and opacitySource are multiplicative)
             visibilitySource={legend[session.uuid].visible}
@@ -305,4 +311,19 @@ export function CentralChart(props: {
       <MouseCapture captureRef={captureRef} />
     </ChartContainer>
   )
+}
+
+/**
+ * Modifies the luminance of a hex value, lum of 0.9 is 10% darker, 1.1 is 10% lighter.
+ */
+function luminance(hex: string, lum: number): string {
+  let c,
+    i,
+    rgb = ''
+  for (i = 0; i < 3; i++) {
+    c = parseInt(hex.substr(i * 2 + 1, 2), 16)
+    c = Math.round(Math.min(Math.max(0, c * lum), 255)).toString(16)
+    rgb += ('00' + c).substr(c.length)
+  }
+  return '#' + rgb
 }

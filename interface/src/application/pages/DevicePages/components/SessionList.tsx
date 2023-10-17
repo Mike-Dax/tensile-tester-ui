@@ -58,56 +58,58 @@ export function SessionList(props: {
 
   const darkMode = useDarkMode()
 
-  const averageSelectedSlope = useDataTransformer(() =>
-    map(
-      // For each session
-      coalesce(
-        sessions.map(session =>
-          // calculate their slope
-          map(
-            coalesce({
-              dragStart: legend[session.uuid].customSignals.dragStart,
-              dragEnd: legend[session.uuid].customSignals.dragEnd,
-              selected: legend[session.uuid].selected,
-            }),
-            data => {
-              if (!data.selected) {
-                return null
-              }
+  const averageSelectedSlope = useDataTransformer(
+    () =>
+      map(
+        // For each session
+        coalesce(
+          sessions.map(session =>
+            // calculate their slope
+            map(
+              coalesce({
+                dragStart: legend[session.uuid].customSignals.dragStart,
+                dragEnd: legend[session.uuid].customSignals.dragEnd,
+                selected: legend[session.uuid].selected,
+              }),
+              data => {
+                if (!data.selected) {
+                  return null
+                }
 
-              if (!data.dragEnd || !data.dragStart) {
-                return null
-              }
+                if (!data.dragEnd || !data.dragStart) {
+                  return null
+                }
 
-              const dY = data.dragEnd.y - data.dragStart.y
-              const dX = data.dragEnd.x - data.dragStart.x
+                const dY = data.dragEnd.y - data.dragStart.y
+                const dX = data.dragEnd.x - data.dragStart.x
 
-              return dY / dX
-            },
+                return dY / dX
+              },
+            ),
           ),
+          { synchronize: false, synchronizeInitial: false, defaultValue: null },
         ),
-        { synchronize: false, synchronizeInitial: false, defaultValue: null },
-      ),
-      // then average their slopes
-      vals => {
-        let sum = 0
-        let count = 0
+        // then average their slopes
+        vals => {
+          let sum = 0
+          let count = 0
 
-        for (let index = 0; index < vals.length; index++) {
-          const val = vals[index]
-          if (val !== null) {
-            sum += val
-            count += 1
+          for (let index = 0; index < vals.length; index++) {
+            const val = vals[index]
+            if (val !== null && Number.isFinite(val)) {
+              sum += val
+              count += 1
+            }
           }
-        }
 
-        if (count === 0) {
-          return null
-        }
+          if (count === 0) {
+            return null
+          }
 
-        return sum / count
-      },
-    ),
+          return sum / count
+        },
+      ),
+    [sessions], // reset on sessions changing
   )
 
   return (
