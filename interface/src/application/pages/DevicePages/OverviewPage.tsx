@@ -5,22 +5,13 @@ import { RouteComponentProps } from '@reach/router'
 import { Divider } from '@blueprintjs/core'
 
 import { Colors, Card, Intent } from '@blueprintjs/core'
-import {
-  ChartContainer,
-  HorizontalAxis,
-  RealTimeSlicingDomain,
-  VerticalAxis,
-  TimeSlicedLineChart,
-  useConsistentColorFactory,
-  useLegend,
-} from '@electricui/components-desktop-charts'
+import { useConsistentColorFactory, useLegend } from '@electricui/components-desktop-charts'
 
 import { Button } from '@electricui/components-desktop-blueprint'
 
-import { useSessions, sessionsToLegendDefinition, useInMemorySessionSource } from '@electricui/core-timeseries'
+import { useSessions, sessionsToLegendDefinition } from '@electricui/core-timeseries'
 
 import { IntervalRequester } from '@electricui/components-core'
-import { ExportSessionAsCSV } from './components/ExportSessionAsCSV'
 import { JogButtons } from './components/JogButtons'
 import { SessionMetadata, SessionIdentity, SessionList } from './components/SessionList'
 import { CentralChart } from './components/CentralChart'
@@ -45,7 +36,15 @@ export const OverviewPage = (props: RouteComponentProps) => {
     name: 'Live',
   }
 
-  const legend = useLegend(legendDef, { visibleIfHovered: true, unhoveredOpacity: 0.5 })
+  const legend = useLegend(legendDef, {
+    visibleIfHovered: true,
+    unhoveredOpacity: 0.5,
+    // Define custom signals per session / legend entry for drag start and end position.
+    customSignals: {
+      dragStart: null as { x: number; y: number } | null,
+      dragEnd: null as { x: number; y: number } | null,
+    },
+  })
 
   // The actual layout of the UI, just done with quick and easy inline styles
   return (
